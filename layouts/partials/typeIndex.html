@@ -1,0 +1,198 @@
+<script type="application/json" id="terminal-data">
+{
+    "projects": {
+        "command": "{{ .tree }}",
+        "output": "{{ .leaf }}"
+    },
+    "posts": {
+        "command": "{{ .postsTree }}",
+        "output": "{{ .postsLeaf }}"
+    },
+    "prompt": "{{ .envWithDir }}"
+}
+</script>
+
+<div id="terminal-output">
+<span id="ps1_01"></span> <span id="cd"></span> <br>
+<span id="ps1_02"></span> <span id="cat"></span> <br>
+<span id="std_out_01"></span> <br>
+</div>
+<div id="terminal-interactive"></div>
+
+<script type="text/javascript">
+    async function typewriter(text, elementId, waitAfter) {
+        var n = 0,
+            isTag = false
+        addText = "";
+        const el = document.getElementById(elementId);
+
+        const wait = () => new Promise(r => setTimeout(r, waitAfter));
+        const nowait = () => new Promise(r => r());
+
+        const render = () => el.innerHTML = (text.slice(0, n + 1) + addText);
+
+        el.style.setProperty("--cursor-visibility", "visible");
+        while (n < text.length) {
+            if (text.charAt(n + 1) === "<") isTag = true;
+            if (text.charAt(n + 1) === ">") isTag = false;
+
+            if (isTag) {
+                n++;
+                continue;
+            }
+
+            requestAnimationFrame(render);
+
+            if (waitAfter === 0) {
+                await nowait();
+            } else {
+                await wait();
+            }
+
+            n++;
+        }
+        el.style.setProperty("--cursor-visibility", "collapse");
+    }
+
+    async function typewriterInto(el, text, waitAfter) {
+        var n = 0, isTag = false;
+        const wait = () => new Promise(r => setTimeout(r, waitAfter));
+        const nowait = () => new Promise(r => r());
+        const render = () => el.innerHTML = text.slice(0, n + 1);
+
+        while (n < text.length) {
+            if (text.charAt(n + 1) === "<") isTag = true;
+            if (text.charAt(n + 1) === ">") isTag = false;
+
+            if (isTag) {
+                n++;
+                continue;
+            }
+
+            requestAnimationFrame(render);
+            if (waitAfter === 0) {
+                await nowait();
+            } else {
+                await wait();
+            }
+            n++;
+        }
+    }
+
+    function parseDelay(d) {
+        const parsed = parseInt(d, 10);
+        if (isNaN(parsed)) return 0;
+        return parsed;
+    }
+
+    const ps1Delay = parseDelay("{{ .ps1delay }}"),
+        stdoutDelay = parseDelay("{{ .stdoutdelay }}"),
+        commandDelay = parseDelay("{{ .commanddelay }}");
+
+    const terminalData = JSON.parse(document.getElementById('terminal-data').textContent);
+    const interactiveContainer = document.getElementById('terminal-interactive');
+
+    function createPromptLine() {
+        const line = document.createElement('div');
+        line.className = 'prompt-line';
+
+        const promptSpan = document.createElement('span');
+        promptSpan.innerHTML = terminalData.prompt;
+
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.id = 'terminal-input';
+        input.className = 'terminal-input';
+        input.setAttribute('autocomplete', 'off');
+        input.setAttribute('autocorrect', 'off');
+        input.setAttribute('autocapitalize', 'off');
+        input.setAttribute('spellcheck', 'false');
+
+        const spacer = document.createElement('span');
+        spacer.innerHTML = '&nbsp;';
+
+        line.appendChild(promptSpan);
+        line.appendChild(spacer);
+        line.appendChild(input);
+        interactiveContainer.appendChild(line);
+
+        const hint = document.createElement('div');
+        hint.className = 'terminal-hint';
+        hint.innerHTML = 'available commands:<br>'
+            + '  <strong>projects</strong>  — list projects tree<br>'
+            + '  <strong>posts</strong>     — list recent posts<br>'
+            + '  <strong>contact</strong>   — get in touch<br>'
+            + '  <strong>clear</strong>     — clear terminal output';
+        interactiveContainer.appendChild(hint);
+
+        input.focus();
+
+        input.addEventListener('input', () => {
+            hint.style.display = input.value.length > 0 ? 'none' : '';
+        });
+
+        input.addEventListener('keydown', async (e) => {
+            if (e.key === 'Enter') {
+                const cmd = input.value.trim().toLowerCase();
+                input.disabled = true;
+                input.removeAttribute('id');
+                input.classList.remove('terminal-input');
+                hint.remove();
+
+                // Replace input with static text of what was typed
+                const typedSpan = document.createElement('span');
+                typedSpan.id = 'terminal';
+                typedSpan.textContent = input.value;
+                input.replaceWith(typedSpan);
+
+                if (cmd === 'clear') {
+                    interactiveContainer.innerHTML = '';
+                    createPromptLine();
+                    return;
+                } else if (cmd === 'projects' && terminalData.projects) {
+                    const outputDiv = document.createElement('span');
+                    interactiveContainer.appendChild(outputDiv);
+                    await typewriterInto(outputDiv, terminalData.projects.output, stdoutDelay);
+                    interactiveContainer.appendChild(document.createElement('br'));
+                } else if (cmd === 'posts') {
+                    const outputDiv = document.createElement('span');
+                    interactiveContainer.appendChild(outputDiv);
+                    await typewriterInto(outputDiv, terminalData.posts.output, stdoutDelay);
+                    interactiveContainer.appendChild(document.createElement('br'));
+                } else if (cmd === 'contact') {
+                    const outputDiv = document.createElement('span');
+                    outputDiv.innerHTML = '<br><a href="mailto:hello@kylswich.com">hello@kylswich.com</a><br><span id="terminal">Jakarta, Indonesia</span><br>';
+                    interactiveContainer.appendChild(outputDiv);
+                    interactiveContainer.appendChild(document.createElement('br'));
+                } else if (cmd !== '') {
+                    const errorSpan = document.createElement('span');
+                    errorSpan.id = 'terminal';
+                    errorSpan.innerHTML = cmd + ': command not found. try: <strong>projects</strong> | <strong>posts</strong> | <strong>contact</strong> | <strong>clear</strong>';
+                    interactiveContainer.appendChild(errorSpan);
+                    interactiveContainer.appendChild(document.createElement('br'));
+                }
+
+                createPromptLine();
+            }
+        });
+    }
+
+    const typeeffect = async () => {
+        await typewriter("{{ .env }}", "ps1_01", ps1Delay);
+        await typewriter("{{ .cd }}", "cd", commandDelay);
+        await typewriter("{{ .envWithDir }}", "ps1_02", ps1Delay);
+        await typewriter("{{ .cat }}", "cat", commandDelay);
+        await typewriter("{{ .description }}", "std_out_01", stdoutDelay);
+
+        // After intro animation, show interactive prompt
+        createPromptLine();
+    }
+
+    typeeffect();
+
+    // Click anywhere on the page to focus the active input
+    document.addEventListener('click', () => {
+        const activeInput = document.getElementById('terminal-input');
+        if (activeInput) activeInput.focus();
+    });
+</script>

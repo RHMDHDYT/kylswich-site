@@ -1,0 +1,35 @@
+baseURL = '/'
+languageCode = 'en-us'
+title = 'KylSwich'
+theme = 'hugo-theme-shell'
+
+[security]
+  [security.http]
+    urls = ['https://raw\.githubusercontent\.com/.*']
+
+[Params]
+  description = "A terminal-style portfolio"
+
+  [Params.Terminal]
+    scheme = "Molokai"
+    userName = "user"
+    pcName = "kylswich"
+    workDir = "~"
+    ps1Delay = 0
+    stdoutDelay = 0
+    commandDelay = 50
+    titleDelay = 0
+    contentDelay = 0
+    description = """
+
+Hi, you are at KylSwich Studio!
+We craft human-centered apps with precision, clarity, and purpose.
+
+"""
+
+  [Params.Tree]
+    use = true
+    folderName = "projects"
+    files = [
+      ["Goodsy (Coming Soon) (iOS)", "#", "Goods Inventory Tracking."],
+    ]

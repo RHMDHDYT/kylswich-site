@@ -1,0 +1,18 @@
+{{ define "main" }}
+    {{ $env := printf "<strong><span id='user'>%s@%s</span><span id='terminal'>:</span><span id='dir'>~</span></strong><span id='terminal'>$</span>" .Site.Params.Terminal.userName .Site.Params.Terminal.pcName | safeHTML }}
+    {{ $envWithDir := printf "<strong><span id='user'>%s@%s</span><span id='terminal'>:</span><span id='dir'>~/%s</span></strong><span id='terminal'>$</span>" .Site.Params.Terminal.userName .Site.Params.Terminal.pcName .Site.Params.Terminal.workDir | safeHTML }}
+
+    {{ $cd := printf "<span id='terminal'>cd %s</span>" .Site.Params.Terminal.workDir | safeHTML }}
+    {{ $cat := printf "<span id='terminal'>cat %s</span>" (.Title | urlize) | safeHTML }}
+    {{ $cdBack := printf "<span id='terminal'><a href='%s'>cd ..</a></span>" ("/" | relURL) | safeHTML }}
+
+    {{ $title := printf "<h1 id='title'><span id='terminal'>%s</span></h1>" .Title }}
+    {{ $content := printf "<span id='terminal'>%s</span>" .Content | safeHTML }}
+
+    {{ $ps1Delay := $.Site.Params.Terminal.ps1Delay }}
+    {{ $stdoutDelay := $.Site.Params.Terminal.stdoutDelay }}
+    {{ $commandDelay := $.Site.Params.Terminal.commandDelay }}
+    {{ $contentDelay := $.Site.Params.Terminal.contentDelay }}
+
+    {{ partial "typeSingle.html" (dict "context" . "env" $env "cd" $cd "envWithDir" $envWithDir "cat" $cat "cdBack" $cdBack "title" $title "content" $content "ps1delay" $ps1Delay "stdoutdelay" $stdoutDelay "commanddelay" $commandDelay "contentdelay" $contentDelay) }}
+{{ end }}

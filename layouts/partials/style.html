@@ -1,0 +1,99 @@
+<style>
+{{- $default_style := resources.Get "sass/default.scss" | css.Sass -}}
+{{- $default_style.Content | safeCSS -}}
+
+.prompt-line {
+    display: flex;
+    align-items: baseline;
+    white-space: nowrap;
+}
+
+.terminal-input,
+.terminal-input:focus {
+    background: transparent;
+    border: none;
+    outline: none;
+    font-family: inherit;
+    font-size: inherit;
+    line-height: inherit;
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 0;
+    margin: 0;
+    caret-color: white;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.terminal-hint {
+    color: grey;
+}
+
+{{ if .IsHome }}
+body {
+    align-items: flex-start;
+}
+#content {
+    width: 82vmin;
+    max-width: 82vmin;
+    padding: 9vmin 0;
+}
+@media only screen and (min-width: 768px) {
+    #content {
+        width: 60vmin;
+        max-width: 60vmin;
+    }
+}
+{{ end }}
+
+{{ if not .IsHome }}
+body {
+    align-items: flex-start;
+    overflow-y: scroll;
+}
+#content {
+    max-width: 80vmin;
+    padding: 9vmin 0;
+}
+pre {
+    overflow-x: scroll;
+    white-space: pre;
+}
+#activity-title:after, #activity-content:after, #cd_back_top:after, #cd_back_bottom:after {
+    visibility: var(--cursor-visibility);
+    content: "|";
+    overflow: hidden;
+    color: white;
+    animation: blink 500ms linear infinite alternate;
+}
+{{ end }}
+
+{{ $terminal_style := resources.Get "sass/white.scss" }}
+{{ with (eq .Site.Params.Terminal.scheme "shell-powershell") }}
+    {{- $terminal_style = resources.Get "sass/powershell.scss" | css.Sass | minify -}}
+    {{- $terminal_style = $terminal_style.Content -}}
+{{ end }}
+{{ with (eq .Site.Params.Terminal.scheme "shell-ubuntu") }}
+    {{- $terminal_style = resources.Get "sass/ubuntu.scss" | css.Sass | minify -}}
+    {{- $terminal_style = $terminal_style.Content -}}
+{{ end }}
+{{ with (eq .Site.Params.Terminal.scheme "shell-retro") }}
+    {{- $terminal_style = resources.Get "sass/retro.scss" | css.Sass | minify -}}
+    {{- $terminal_style = $terminal_style.Content -}}
+{{ end }}
+
+{{/*  Assume that ubuntu and retro do not exist in gogh.  */}}
+{{ $themeResource := resources.GetRemote "https://raw.githubusercontent.com/Gogh-Co/Gogh/master/data/themes.json" }}
+{{ with $themeResource }}
+  {{ $themeData := .Content | transform.Unmarshal }}
+  {{ range $t := $themeData }}
+      {{if eq $t.name $.Site.Params.Terminal.scheme }}
+          {{ $terminal_style = printf "body{background:%s}body #terminal{color:%s}body #user{color:%s}body #dir{color:%s}body .Typewriter__cursor{color:%s}a{color:%s}.terminal-input{color:%s}" $t.background $t.cursor $t.color_03 $t.color_05 $t.cursor $t.cursor $t.cursor | safeCSS }}
+      {{ end }}
+  {{ end }}
+{{ end }}
+
+{{ $terminal_style | safeCSS }}
+
+
+</style>
