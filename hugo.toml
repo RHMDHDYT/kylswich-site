@@ -1,4 +1,4 @@
-baseURL = '/'
+baseURL = 'https://kylswich.com/'
 languageCode = 'en-us'
 title = 'KylSwich'
 theme = 'hugo-theme-shell'
